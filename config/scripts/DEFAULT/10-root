@@ -1,0 +1,14 @@
+#! /bin/bash
+
+error=0; trap 'error=$(($?>$error?$?:$error))' ERR # save maximum error code
+
+$ROOTCMD passwd --lock root
+
+# make /root accessible only by root
+chmod -c 0700 $target/root
+chown -c root:root $target/root
+
+# copy default dotfiles for root account
+fcopy -ir /root
+
+exit $error

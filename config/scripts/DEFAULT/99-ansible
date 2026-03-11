@@ -1,0 +1,21 @@
+#! /bin/bash
+
+error=0; trap 'error=$(($?>$error?$?:$error))' ERR # save maximum error code
+
+username="ansible"
+password=$(echo -n "$PASSWORD" | base64 -d)
+ssh_key=$(echo -n "$SSH_KEY" | base64 -d)
+
+if [ -n "$username" ]; then
+    if ! $ROOTCMD getent passwd $username ; then
+        $ROOTCMD adduser --disabled-password --gecos "$username" $username
+        $ROOTCMD usermod -p "$password" $username
+        $ROOTCMD usermod -aG sudo $username
+        mkdir $target/home/$username/.ssh
+        echo "$ssh_key" >> $target/home/$username/.ssh/authorized_keys
+        $ROOTCMD chown -R "$username": /home/$username/.ssh
+        $ROOTCMD chmod 0600 /home/$username/.ssh/authorized_keys
+    fi
+fi
+
+exit $error

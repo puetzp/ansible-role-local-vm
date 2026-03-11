@@ -1,0 +1,36 @@
+PACKAGES install-norec
+apt-listchanges
+bash-completion
+bind9-host
+bind9-dnsutils
+console-setup kbd
+dbus
+doc-debian
+file
+gettext-base
+groff-base
+hdparm
+less
+locales
+lsof
+man-db
+manpages
+media-types
+ncurses-term
+nullmailer
+openssh-client
+openssh-server
+pciutils
+perl
+procinfo
+sudo
+time
+ucf
+xz-utils
+python3-minimal
+zstd
+linux-image-amd64
+grub-efi
+dosfstools
+efibootmgr
+lvm2

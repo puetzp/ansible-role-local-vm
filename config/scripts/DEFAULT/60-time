@@ -1,0 +1,23 @@
+#! /bin/bash
+
+error=0; trap 'error=$(($?>$error?$?:$error))' ERR # save maximum error code
+
+if [ ! -e $target/etc/adjtime ]; then
+    printf "0.0 0 0.0\n0\nUTC\n" > $target/etc/adjtime
+fi
+if [ "$UTC" = "yes" ]; then
+    fai-sed 's:^LOCAL$:UTC:' /etc/adjtime
+else
+    fai-sed 's:^UTC$:LOCAL:' /etc/adjtime
+fi
+
+echo $TIMEZONE    > $target/etc/timezone
+
+if [ -L $target/etc/localtime ]; then
+    fai-link /etc/localtime /usr/share/zoneinfo/${TIMEZONE}
+else
+    cp -f /usr/share/zoneinfo/${TIMEZONE} $target/etc/localtime
+fi
+
+exit $error
+

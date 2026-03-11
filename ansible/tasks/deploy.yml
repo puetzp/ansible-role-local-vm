@@ -1,0 +1,28 @@
+---
+- name: Install VM
+  block:
+    - name: Render host-specific grub configuration file
+      ansible.builtin.template:
+        src: grub.cfg.j2
+        dest: "/srv/fai/iso/{{ fqdn }}.grub.cfg"
+        mode: '0644'
+
+    - name: Build ISO image
+      ansible.builtin.command:
+        cmd: "fai-cd -f -m /srv/fai/mirror -g /srv/fai/iso/{{ fqdn }}.grub.cfg {{ fqdn }}.iso"
+        chdir: /srv/fai/iso
+      become: true
+
+    - name: Create VM and wait for installation to finish
+      ansible.builtin.command:
+        cmd: "virt-install --connect qemu:///system --name {{ fqdn }} --memory {{ config.memory }} --vcpus {{ config.cpu }} --cpu host --cdrom /srv/fai/iso/{{ fqdn }}.iso --osinfo name=debian12 --disk {{ config.disks | map('regex_replace', '^', 'size=') | join(' --disk ') }} --network network=default --noautoconsole --boot loader=/usr/share/OVMF/OVMF_CODE_4M.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/usr/share/OVMF/OVMF_VARS_4M.fd,loader_secure=no --wait"
+
+    - name: Delete ISO image
+      ansible.builtin.file:
+        path: "/srv/fai/iso/{{ fqdn }}.iso"
+        state: absent
+
+    - name: Delete host-specific grub configuration file
+      ansible.builtin.file:
+        path: "/srv/fai/iso/{{ fqdn }}.grub.cfg"
+        state: absent

@@ -1,0 +1,20 @@
+---
+- name: Create ISO image directory
+  ansible.builtin.file:
+    state: directory
+    path: /srv/fai/iso
+    mode: '0755'
+
+- name: Fetch names of existing VMs
+  ansible.builtin.command:
+    cmd: virsh --connect qemu:///system list --name --all
+  register: _output
+
+- name: Install VM if it does not exist
+  include_tasks: deploy.yml
+  loop: "{{ virtual_machines | dict2items }}"
+  when: fqdn not in _output.stdout_lines
+  vars:
+    hostname: "{{ item.key }}"
+    config: "{{ item.value }}"
+    fqdn: "{{ hostname ~ '.' ~ domain }}"
