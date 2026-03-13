@@ -3,6 +3,7 @@ apt-listchanges
 bash-completion
 bind9-host
 bind9-dnsutils
+ca-certificates
 console-setup kbd
 dbus
 doc-debian
