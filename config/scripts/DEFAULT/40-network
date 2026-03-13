@@ -12,6 +12,6 @@ iface $INTERFACE inet static
     gateway $GATEWAY
 EOF
 
-rm $target/etc/resolv.conf
+echo "nameserver $DNS" > $target/etc/resolv.conf
 
 exit $error

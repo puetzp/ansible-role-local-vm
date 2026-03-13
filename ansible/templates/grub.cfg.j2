@@ -9,6 +9,6 @@ insmod all_video
 
 menuentry "Offline installation" {
     search --set=root --file /FAI-CD
-    linux   /boot/vmlinuz FAI_FLAGS="verbose,reboot" PASSWORD={{ password | b64encode }} SSH_KEY={{ ssh_key | b64encode }} FAI_ACTION=install FAI_CONFIG_SRC=detect:// IPADDR={{ config.ip }} NETMASK={{ config.netmask | default('255.255.255.0') }} GATEWAY={{ config.gateway }} DOMAIN_={{ domain }} hostname={{ hostname }} rd.live.overlay.overlayfs root=live:CDLABEL=FAI_CD rd.neednet=0 ipv6.disable=1 quiet
+    linux   /boot/vmlinuz FAI_FLAGS="verbose,reboot" PASSWORD={{ password | b64encode }} SSH_KEY={{ ssh_key | b64encode }} FAI_ACTION=install FAI_CONFIG_SRC=detect:// IPADDR={{ config.ip }} NETMASK={{ config.netmask | default('255.255.255.0') }} GATEWAY={{ config.gateway }} DOMAIN_={{ domain }} DNS={{ dns }} hostname={{ hostname }} rd.live.overlay.overlayfs root=live:CDLABEL=FAI_CD rd.neednet=0 ipv6.disable=1 quiet
     initrd  /boot/initrd.img
 }

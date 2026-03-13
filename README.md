@@ -11,7 +11,7 @@ The role installs new Debian VMs in the following way:
 - sets FQDN using the IPv4 address from the NIC via `/etc/hosts`
 - creates a user `ansible` with a specific password defined by the dev
 - adds the dev's SSH public key to the `authorized_keys` of `ansible`
-- removes `/etc/resolv.conf`
+- adds an initial nameserver entry to `/etc/resolv.conf`
 - removes `/etc/apt/sources.list`
 
 After installation new VMs are reachable via SSH and ready to be configured by Ansible. The role provides a minimal environment only, assuming that other Ansible plays take over from there to finish the system's configuration.
@@ -110,6 +110,9 @@ password: $6$E9akWI2zpi.biv1g$YHGfQ2dzfmFsAbEpX/j7t22K5qqJTevm3XfslT4GiI9GYdsE8l
 
 # Your SSH public key.
 ssh_key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+
+# Initial DNS server for early bootstrapping.
+dns: 192.168.3.100
 
 # VMs to be installed. Existing VMs are skipped.
 virtual_machines:
