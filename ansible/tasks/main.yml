@@ -1,8 +1,8 @@
 ---
-- name: Create ISO image directory
+- name: Create disk image directory
   ansible.builtin.file:
     state: directory
-    path: /srv/fai/iso
+    path: /srv/fai/images
     mode: '0755'
 
 - name: Fetch names of existing VMs

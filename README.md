@@ -1,22 +1,20 @@
 ansible-role-local-vm
 =====================
 
-This [Ansible](https://docs.ansible.com/) role uses [FAI](https://fai-project.org/fai-guide/) to install local virtual machines (VM) via `libvirt` (KVM) for testing purposes. The setup is quite opinionated to facilitate quick deployment of (possibly) short-lived VMs. For example I use it to test other Ansible roles in a freshly installed Debian 13 (`trixie`) operating system.
+This [Ansible](https://docs.ansible.com/) role uses [FAI](https://fai-project.org/fai-guide/) to build raw disk images and create local virtual machines (VM) via `libvirt` (KVM) for testing purposes. The setup is quite opinionated to facilitate quick deployment of (possibly) short-lived VMs. For example I use it to test other Ansible roles in a freshly installed Debian 13 (`trixie`) operating system.
 
-The role installs new Debian VMs in the following way:
+The role creates raw disk images in the following way:
 
-- adds a single virtual network adapter and assigns a static IPv4 address 
-- adds one or more virtual disks, uses the first to set up EFI and root partitions and installs Debian 13
+- sets up separate partitions for EFI and LVM and installs Debian 13
+- creates network configuration for a single interface and assigns a static IPv4 address
 - sets hostname
 - sets FQDN using the IPv4 address from the NIC via `/etc/hosts`
 - creates a user `ansible` with a specific password defined by the dev
 - adds the dev's SSH public key to the `authorized_keys` of `ansible`
 - adds an initial nameserver entry to `/etc/resolv.conf`
-- removes `/etc/apt/sources.list`
+- copies `/etc/fai/apt/sources.list` to the disk image at `/etc/apt/sources.list`
 
-After installation new VMs are reachable via SSH and ready to be configured by Ansible. The role provides a minimal environment only, assuming that other Ansible plays take over from there to finish the system's configuration.
-
-VM installation does not rely on the network. Instead the role creates installation media and mounts it in the new VM to install Debian from a local mirror (see [FAI Guide](https://fai-project.org/fai-guide/#_a_id_cdboot_a_creating_a_fai_cd_or_and_usb_stick)).
+Then Ansible creates new VMs from those disk images. After booting VMs are reachable via SSH and ready to be configured by other Ansible plays.
 
 Preparation
 -----------
@@ -40,7 +38,7 @@ sudo virsh net-start default
 
 > Strictly speaking the default network defined in `/usr/share/libvirt/networks/default.xml` goes beyond what is needed in this setup, such as enabling a DHCP service for guests. DHCP can be removed from the network configuration file without interfering with this role.
 
-Then install FAI. While the [FAI Guide](https://fai-project.org/fai-guide/#_install_the_fai_packages) and the [homepage](https://fai-project.org/download/) provide instructions on this, the necessary steps to use FAI with this role differ slightly from the recommended installation process:
+Then install FAI. While the [FAI Guide](https://fai-project.org/fai-guide/#_install_the_fai_packages) and the [homepage](https://fai-project.org/download/) provide instructions on this, the necessary steps to use FAI with this role differ slightly from the recommended installation process, because fewer packages are needed to create disk images:
 
 ```sh
 # as root
@@ -51,7 +49,7 @@ wget https://fai-project.org/download/fai-project.gpg -O /etc/apt/trusted.gpg.d/
 
 ```sh
 sudo apt update
-sudo apt install --no-install-recommends fai-server reprepro squashfs-tools dosfstools mtools
+sudo apt install --no-install-recommends fai-server fai-setup-storage
 ```
 
 Then prepare the FAI configuration space and install the Ansible role:
@@ -62,39 +60,28 @@ git clone git@github.com:puetzp/ansible-role-local-vm.git
 sudo mv ansible-role-local-vm /srv/fai
 ```
 
-Cloning the repository in this specific location ensures that FAI is able to locate the configuration space in its default path `/srv/fai/config`, while the Ansible role is available in `/srv/fai/ansible`.
+Moving the repository to this specific location ensures that FAI is able to locate the configuration space in its default path `/srv/fai/config`, while the Ansible role is available in `/srv/fai/ansible`.
 
-When FAI is used for offline or online installations it needs a `nfsroot` which contains a minimal Debian environment (via `debootstrap`) and some extra packages that enable FAI to install Debian on the first virtual disk (see [FAI Guide](https://fai-project.org/fai-guide/#_create_the_nfsroot)).
-
-Review the contents of `/etc/fai/nfsroot.conf` and `/etc/fai/apt/sources.list` and optionally replace the apt mirrors mentioned there. Then create the `nfsroot`:
+The `fai-diskimage` command requires a basefile to build disk images having a specific operating system. Execute the following command once to create a basefile for Debian 13:
 
 ```sh
-sudo fai-setup -v -f
+cd /srv/fai/config/basefiles
+sudo ./mk-basefile TRIXIE64
 ```
 
-In addition to the nfsroot FAI also uses a small local mirror to hold packages defined in [`/srv/fai/config/package_config/DEFAULT`](config/package_config/DEFAULT). Those are packages that you would like to have installed in every new Debian environment. Optionally adjust the list of packages and created the local mirror with this command:
-
-```sh
-sudo fai-mirror /srv/fai/mirror
-```
-
-The directory should now look like this:
+Also ensure that `/etc/fai/apt/sources.list` contains the correct sources for Debian 13:
 
 ```
-/srv/fai
-├── ansible
-├── config
-├── mirror      # created by fai-mirror
-├── nfsroot     # created by fai-setup
-└── README.md
+deb http://deb.debian.org/debian trixie main
+deb http://deb.debian.org/debian-security trixie-security main
 ```
 
 VM Installation
 ---------------
 
-After preparing the local system by following the above steps, the FAI configuration space and Ansible role located in `/srv/fai/ansible` can now be used to installs new VMs.
+After preparing the local system by following the above steps, the FAI configuration space and Ansible role located in `/srv/fai/ansible` can now be used to install new VMs.
 
-Since the Ansible role configures `localhost` no inventory file is required, only some host variables. The following configuration assumes that your playbooks are located in `$HOME/ansible`.
+Since the Ansible role runs on `localhost` no inventory file is required, only some host variables. The following configuration assumes that your playbooks are located in `$HOME/ansible`.
 
 ```yml
 # $HOME/ansible/host_vars/localhost.yml
@@ -119,23 +106,19 @@ virtual_machines:
   dns:
     cpu: 2
     memory: 2048
-    disks:
-      - 20
+    interface: enp1s0
     ip: 192.168.122.2
     gateway: 192.168.122.1
   ntp:
     cpu: 2
     memory: 2048
-    disks:
-      - 20
+    interface: enp1s0
     ip: 192.168.122.3
     gateway: 192.168.122.1
   netbox:
     cpu: 4
     memory: 8192
-    disks:
-      - 20
-      - 100
+    interface: enp1s0
     ip: 192.168.122.4
     netmask: 255.255.255.0    # optional, defaults to `255.255.255.0`
     gateway: 192.168.122.1
@@ -156,7 +139,7 @@ Use the following example playbook to install the VMs:
 ansible-playbook -K deploy-vms.yml
 ```
 
-> Note that a sudo password needs to be passed to Ansible via the `-K` parameter, because FAI needs to execute the `fai-cd` command as root to build the ISO file on the local system.
+> Note that a sudo password needs to be passed to Ansible via the `-K` parameter, because FAI needs to execute the `fai-diskimage` command as root to build the disk image on the local system.
 
 In this example the result of the play are three local VMs accessible via SSH:
 
@@ -171,40 +154,4 @@ Of course this whole deployment and installation process for test VMs could just
 
 - having a playbook for local test deployments adjacent to any other playbooks that configure local or remote VMs
 - being able to expand or clone the role for remote deployments (e.g. VMs on Proxmox) and Ansible becomes the more convenient choice
-
-Drawbacks
----------
-
-New VMs are installed sequentially. Since each installation takes 60-80 seconds to finish (depending on your rig), deploying multiple VMs might take a few minutes. Still, deploying a few new VMs to try some things out should not take much longer than getting a fresh cup of coffee.
-
-One area of reducing overhead is examining the content of the nfsroot in `/etc/fai/NFSROOT` and removing packages that are not needed for this setup to work. The following is a minimal nfsroot that works for me:
-
-```
-# package list for creating the NFSROOT
-
-PACKAGES install-norec
-# dracut replaces live-boot and initramfs-tools
-dracut live-boot- initramfs-tools-
-dracut-config-generic
-dracut-network
-dbus
-curl lftp
-util-linux-extra
-less
-ntpsec-ntpdate rdate
-dosfstools
-lvm2
-psmisc
-uuid-runtime
-dialog
-console-common kbd
-xz-utils pigz zstd
-gpg
-
-PACKAGES install-norec AMD64
-grub-pc
-grub-efi-amd64-bin
-efibootmgr
-```
-
 

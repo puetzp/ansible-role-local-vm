@@ -1,4 +1,2 @@
-/iso
-/mirror
-/nfsroot
-
+/images
+/config/basefiles/TRIXIE64.tar.xz

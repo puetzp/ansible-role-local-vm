@@ -1,0 +1,8 @@
+PASSWORD='{{ password }}'
+SSH_KEY='{{ ssh_key }}'
+INTERFACE='{{ config.interface }}'
+IPADDR='{{ config.ip }}'
+NETMASK='{{ config.netmask | default('255.255.255.0') }}'
+GATEWAY='{{ config.gateway }}'
+DOMAIN_='{{ domain }}'
+DNS='{{ dns }}'
