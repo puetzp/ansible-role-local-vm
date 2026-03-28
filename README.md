@@ -69,7 +69,7 @@ cd /srv/fai/config/basefiles
 sudo ./mk-basefile TRIXIE64
 ```
 
-Also ensure that `/etc/fai/apt/sources.list` contains the correct sources for Debian 13:
+Also ensure that `/etc/fai/apt/sources.list` contains valid sources for Debian 13:
 
 ```
 deb http://deb.debian.org/debian trixie main
