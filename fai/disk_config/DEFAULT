@@ -15,7 +15,7 @@ vg1-root     /           3G       ext4    noatime,rw
 vg1-swap     swap        1G       swap    sw
 vg1-home     /home       1G       ext4    noatime,nosuid,nodev,noexec,rw
 vg1-var      /var        3G       ext4    noatime,nosuid,nodev,rw
-vg1-var_log  /var/log    1G       ext4    noatime,nosuid,nodev,noexec,rw
+vg1-var_log  /var/log    200M     ext4    noatime,nosuid,nodev,noexec,rw
 
 disk_config tmpfs
 tmpfs        /tmp      RAM:50%          noatime,nosuid,nodev,noexec,rw

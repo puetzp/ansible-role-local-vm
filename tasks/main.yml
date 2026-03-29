@@ -1,10 +1,4 @@
 ---
-- name: Create ISO image directory
-  ansible.builtin.file:
-    state: directory
-    path: /srv/fai/iso
-    mode: '0755'
-
 - name: Fetch names of existing VMs
   ansible.builtin.command:
     cmd: virsh --connect qemu:///system list --name --all
