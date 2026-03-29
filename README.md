@@ -52,20 +52,17 @@ sudo apt update
 sudo apt install --no-install-recommends fai-server fai-setup-storage
 ```
 
-Then prepare the FAI configuration space and install the Ansible role:
+Then prepare the FAI configuration space and install the Ansible role by cloning the repository:
 
 ```sh
 cd $HOME
 git clone git@github.com:puetzp/ansible-role-local-vm.git
-sudo mv ansible-role-local-vm /srv/fai
 ```
-
-Moving the repository to this specific location ensures that FAI is able to locate the configuration space in its default path `/srv/fai/config`, while the Ansible role is available in `/srv/fai/ansible`.
 
 The `fai-diskimage` command requires a basefile to build disk images having a specific operating system. Execute the following command once to create a basefile for Debian 13:
 
 ```sh
-cd /srv/fai/config/basefiles
+cd $HOME/ansible-role-local-vm/config/basefiles
 sudo ./mk-basefile TRIXIE64
 ```
 
@@ -132,7 +129,7 @@ Use the following example playbook to install the VMs:
 - hosts: localhost
   gather_facts: false
   roles:
-    - role: /srv/fai/ansible
+    - role: ../ansible-role-local-vm
 ```
 
 ```sh

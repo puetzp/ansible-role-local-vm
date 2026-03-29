@@ -4,20 +4,20 @@
     - name: Create host-specific var file
       ansible.builtin.template:
         src: var.j2
-        dest: "/srv/fai/config/class/{{ fqdn }}.var"
+        dest: "{{ role_path }}/../config/class/{{ fqdn }}.var"
         mode: '0644'
 
     - name: Build disk image
       ansible.builtin.command:
-        cmd: "fai-diskimage -u {{ hostname }} -S10G -cDEFAULT,TRIXIE64,{{ fqdn }},LAST {{ fqdn }}.raw"
-        chdir: /srv/fai/images
+        cmd: "fai-diskimage -s {{ role_path }}/../config -u {{ hostname }} -S10G -cDEFAULT,TRIXIE64,{{ fqdn }},LAST {{ fqdn }}.raw"
+        chdir: /var/lib/libvirt/images
       become: true
 
     - name: Delete host-specific var file
       ansible.builtin.file:
-        path: "/srv/fai/config/class/{{ fqdn }}.var"
+        path: "{{ role_path }}/../config/class/{{ fqdn }}.var"
         state: absent
 
     - name: Create VM
       ansible.builtin.command:
-        cmd: "virt-install --connect qemu:///system --name {{ fqdn }} --memory {{ config.memory }} --vcpus {{ config.cpu }} --cpu host --osinfo name=debian13 --import --disk /srv/fai/images/{{ fqdn }}.raw,format=raw --network network=default --noautoconsole --boot loader=/usr/share/OVMF/OVMF_CODE_4M.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/usr/share/OVMF/OVMF_VARS_4M.fd,loader_secure=no"
+        cmd: "virt-install --connect qemu:///system --name {{ fqdn }} --memory {{ config.memory }} --vcpus {{ config.cpu }} --cpu host --osinfo name=debian13 --import --disk /var/lib/libvirt/images/{{ fqdn }}.raw,format=raw --network network=default --noautoconsole --boot loader=/usr/share/OVMF/OVMF_CODE_4M.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/usr/share/OVMF/OVMF_VARS_4M.fd,loader_secure=no"
