@@ -1,1 +1,3 @@
-/config/basefiles/TRIXIE64.tar.xz
+/fai/basefiles/*.tar.xz
+/fai/basefiles/*.tar.zst
+/fai/basefiles/*.tar

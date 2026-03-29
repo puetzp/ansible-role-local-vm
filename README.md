@@ -49,7 +49,7 @@ wget https://fai-project.org/download/fai-project.gpg -O /etc/apt/trusted.gpg.d/
 
 ```sh
 sudo apt update
-sudo apt install --no-install-recommends fai-server fai-setup-storage
+sudo apt install --no-install-recommends fai-server fai-setup-storage qemu-utils
 ```
 
 Then prepare the FAI configuration space and install the Ansible role by cloning the repository:
@@ -62,7 +62,7 @@ git clone git@github.com:puetzp/ansible-role-local-vm.git
 The `fai-diskimage` command requires a basefile to build disk images having a specific operating system. Execute the following command once to create a basefile for Debian 13:
 
 ```sh
-cd $HOME/ansible-role-local-vm/config/basefiles
+cd $HOME/ansible-role-local-vm/fai/basefiles
 sudo ./mk-basefile TRIXIE64
 ```
 
@@ -75,8 +75,6 @@ deb http://deb.debian.org/debian-security trixie-security main
 
 VM Installation
 ---------------
-
-After preparing the local system by following the above steps, the FAI configuration space and Ansible role located in `/srv/fai/ansible` can now be used to install new VMs.
 
 Since the Ansible role runs on `localhost` no inventory file is required, only some host variables. The following configuration assumes that your playbooks are located in `$HOME/ansible`.
 
