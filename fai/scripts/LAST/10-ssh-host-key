@@ -16,5 +16,6 @@ rsa=$(cat $target/etc/ssh/ssh_host_rsa_key.pub)
 echo "$IPADDR $rsa" >> /etc/ssh/ssh_known_hosts
 
 ssh-keygen -f /etc/ssh/ssh_known_hosts -H
+rm -f /etc/ssh/ssh_known_hosts.old
 
 exit $error
