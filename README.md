@@ -16,6 +16,8 @@ The role creates raw disk images in the following way:
 
 Then Ansible creates new VMs from those disk images. After booting VMs are reachable via SSH and ready to be configured by other Ansible plays.
 
+> Since the disk image is created as root and it is possible to modify files outside of the chroot during the `configure` phase (see also [FAI tasks](https://fai-project.org/fai-guide/#tasks)), the role also adds the SSH host keys from the disk image to the global SSH known hosts file (located at `/etc/ssh/ssh_known_hosts`) on the deployment server. While it may not be a problem when developing locally, this avoids the TOFU ("trust on first use") issue, when SSH would normally ask you to accept the new host key.
+
 Preparation
 -----------
 
