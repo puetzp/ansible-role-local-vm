@@ -9,7 +9,7 @@
 
     - name: Build disk image
       ansible.builtin.command:
-        cmd: "fai-diskimage -s {{ role_path }}/fai -u {{ hostname }} -S10G -cDEFAULT,TRIXIE64,{{ fqdn }},LAST {{ fqdn }}.raw"
+        cmd: "fai-diskimage -s {{ role_path }}/fai -v -u {{ hostname }} -S10G -cDEFAULT,TRIXIE64,{{ fqdn }},LAST {{ fqdn }}.raw"
         chdir: /var/lib/libvirt/images
       become: true
 
