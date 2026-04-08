@@ -1,4 +1,48 @@
 ---
+- name: Install wireguard
+  ansible.builtin.apt:
+    name: wireguard
+    update_cache: true
+    install_recommends: false
+  become: true
+
+- name: Generate keys
+  ansible.builtin.shell:
+    cmd: wg genkey | tee private.key | wg pubkey > public.key
+    chdir: /etc/wireguard
+    creates: /etc/wireguard/private.key
+  become: true
+
+- name: Read /etc/wireguard/private.key
+  ansible.builtin.command:
+    cmd: cat /etc/wireguard/private.key
+  become: true
+  register: _private_key
+
+- name: Create /etc/wireguard/wgvirt.conf
+  ansible.builtin.blockinfile:
+    path: /etc/wireguard/wgvirt.conf
+    owner: root
+    group: root
+    mode: '0600'
+    create: true
+    append_newline: true
+    block: |
+      [Interface]
+      PrivateKey = {{ _private_key.stdout | trim }}
+      ListenPort = 51820
+      Address = {{ wg_ip }}/32
+      PostUp = ip route add {{ wg_network }} via {{ wg_gateway }} dev virbr0
+      PostDown = ip route del {{ wg_network }} via {{ wg_gateway }} dev virbr0
+  become: true
+
+- name: Start wg-quick@wgvirt
+  ansible.builtin.systemd_service:
+    name: wg-quick@wgvirt
+    state: started
+    enabled: true
+  become: true
+
 - name: Fetch names of existing VMs
   ansible.builtin.command:
     cmd: virsh --connect qemu:///system list --name --all

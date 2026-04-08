@@ -2,18 +2,20 @@
 
 error=0; trap 'error=$(($?>$error?$?:$error))' ERR # save maximum error code
 
+ip=${WG_IPADDR%/*}
+
 if [ -e /etc/ssh/ssh_known_hosts ]; then
-    ssh-keygen -f /etc/ssh/ssh_known_hosts -R "$IPADDR"
+    ssh-keygen -f /etc/ssh/ssh_known_hosts -R "$ip"
 fi
 
 ecdsa=$(cat $target/etc/ssh/ssh_host_ecdsa_key.pub)
-echo "$IPADDR $ecdsa" >> /etc/ssh/ssh_known_hosts
+echo "$ip $ecdsa" >> /etc/ssh/ssh_known_hosts
 
 ed25519=$(cat $target/etc/ssh/ssh_host_ed25519_key.pub)
-echo "$IPADDR $ed25519" >> /etc/ssh/ssh_known_hosts
+echo "$ip $ed25519" >> /etc/ssh/ssh_known_hosts
 
 rsa=$(cat $target/etc/ssh/ssh_host_rsa_key.pub)
-echo "$IPADDR $rsa" >> /etc/ssh/ssh_known_hosts
+echo "$ip $rsa" >> /etc/ssh/ssh_known_hosts
 
 ssh-keygen -f /etc/ssh/ssh_known_hosts -H
 rm -f /etc/ssh/ssh_known_hosts.old

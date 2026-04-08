@@ -1,0 +1,35 @@
+#!/bin/bash
+
+error=0; trap 'error=$(($?>$error?$?:$error))' ERR # save maximum error code
+
+wg genkey | tee $target/etc/wireguard/private.key | wg pubkey > $target/etc/wireguard/public.key
+
+privkey=$(cat $target/etc/wireguard/private.key)
+pubkey=$(cat $target/etc/wireguard/public.key)
+
+server_pubkey=$(cat /etc/wireguard/public.key)
+
+cat <<EOF > $target/etc/wireguard/wg0.conf
+[Interface]
+PrivateKey = $privkey
+ListenPort = 51820
+Address = $WG_IPADDR
+
+[Peer]
+PublicKey = $server_pubkey
+AllowedIPs = $SERVER_WG_IPADDR
+EOF
+
+$ROOTCMD systemctl enable wg-quick@wg0
+
+cat <<EOF >> /etc/wireguard/wgvirt.conf
+
+[Peer]
+PublicKey = $pubkey
+Endpoint = $IPADDR:51820
+AllowedIPs = $WG_IPADDR
+EOF
+
+systemctl reload wg-quick@wgvirt
+
+exit $error

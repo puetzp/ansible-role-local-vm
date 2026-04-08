@@ -35,3 +35,4 @@ grub-efi
 dosfstools
 efibootmgr
 lvm2
+wireguard
