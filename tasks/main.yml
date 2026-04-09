@@ -1,4 +1,18 @@
 ---
+- name: Fetch names of existing VMs
+  ansible.builtin.command:
+    cmd: virsh --connect qemu:///system list --name --all
+  register: _existing_vms
+
+- name: Install VM if it does not exist
+  include_tasks: deploy.yml
+  loop: "{{ virtual_machines | dict2items }}"
+  when: fqdn not in _existing_vms.stdout_lines
+  vars:
+    hostname: "{{ item.key }}"
+    config: "{{ item.value }}"
+    fqdn: "{{ hostname ~ '.' ~ domain }}"
+
 - name: Install wireguard
   ansible.builtin.apt:
     name: wireguard
@@ -19,40 +33,39 @@
   become: true
   register: _private_key
 
+- name: Read WireGuard cache
+  ansible.builtin.command:
+    cmd: "cat {{ playbook_dir }}/.ansible-role-local-vm.json"
+  register: _wg_cache
+
+- name: Fetch names of existing VMs
+  ansible.builtin.command:
+    cmd: virsh --connect qemu:///system list --name --all
+  register: _existing_vms
+
 - name: Create /etc/wireguard/wgvirt.conf
-  ansible.builtin.blockinfile:
-    path: /etc/wireguard/wgvirt.conf
-    owner: root
-    group: root
-    mode: '0600'
-    create: true
-    append_newline: true
-    block: |
+  ansible.builtin.copy:
+    content: |
       [Interface]
       PrivateKey = {{ _private_key.stdout | trim }}
       ListenPort = 51820
       Address = {{ wg_ip }}/32
       PostUp = ip route add {{ wg_network }} via {{ wg_gateway }} dev virbr0
       PostDown = ip route del {{ wg_network }} via {{ wg_gateway }} dev virbr0
-  become: true
 
-- name: Start wg-quick@wgvirt
-  ansible.builtin.systemd_service:
-    name: wg-quick@wgvirt
-    state: started
-    enabled: true
-  become: true
+      {% for item in wg_cache if item.key in _existing_vms.stdout_lines %}
+      [Peer]
+      PublicKey = {{ item.value.pubkey }}
+      Endpoint = {{ item.value.endpoint }}
+      AllowedIPs = {{ item.value.allowed_ip }}
 
-- name: Fetch names of existing VMs
-  ansible.builtin.command:
-    cmd: virsh --connect qemu:///system list --name --all
-  register: _output
-
-- name: Install VM if it does not exist
-  include_tasks: deploy.yml
-  loop: "{{ virtual_machines | dict2items }}"
-  when: fqdn not in _output.stdout_lines
+      {% endfor %}
+    dest: /etc/wireguard/wgvirt.conf
+    owner: root
+    group: root
+    mode: '0600'
   vars:
-    hostname: "{{ item.key }}"
-    config: "{{ item.value }}"
-    fqdn: "{{ hostname ~ '.' ~ domain }}"
+    wg_cache: "{{ _wg_cache.stdout | from_json | dict2items }}"
+  become: true
+  notify:
+    - Restart wg-quick@wgvirt

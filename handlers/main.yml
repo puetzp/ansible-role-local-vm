@@ -1,0 +1,7 @@
+---
+- name: Restart wg-quick@wgvirt
+  ansible.builtin.systemd_service:
+    name: wg-quick@wgvirt
+    state: restarted
+    enabled: true
+  become: true

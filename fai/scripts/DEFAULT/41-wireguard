@@ -22,14 +22,13 @@ EOF
 
 $ROOTCMD systemctl enable wg-quick@wg0
 
-cat <<EOF >> /etc/wireguard/wgvirt.conf
+wg_cache="$PLAYBOOK_DIR/.ansible-role-local-vm.json"
 
-[Peer]
-PublicKey = $pubkey
-Endpoint = $IPADDR:51820
-AllowedIPs = $WG_IPADDR
-EOF
+if [ ! -e $wg_cache ]; then
+    echo '{}' > $wg_cache
+fi
 
-systemctl reload wg-quick@wgvirt
+content=$(cat $wg_cache | jq --arg fqdn "$FQDN" --arg pubkey "$pubkey" --arg endpoint "$IPADDR:51820" --arg ip "$WG_IPADDR" '. + { $fqdn: { "pubkey": $pubkey, "endpoint": $endpoint, "allowed_ip": $ip }}')
+echo "$content" > $wg_cache
 
 exit $error

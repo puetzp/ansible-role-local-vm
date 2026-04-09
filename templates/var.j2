@@ -1,10 +1,17 @@
+PLAYBOOK_DIR='{{ playbook_dir }}'
+
+FQDN='{{ fqdn }}'
+
 PASSWORD='{{ password }}'
 SSH_KEY='{{ ssh_key }}'
+
+DOMAIN_='{{ domain }}'
+DNS='{{ dns }}'
+
 INTERFACE='{{ config.interface }}'
 IPADDR='{{ config.ip }}'
 NETMASK='{{ config.netmask | default('255.255.255.0') }}'
 GATEWAY='{{ config.gateway }}'
-DOMAIN_='{{ domain }}'
-DNS='{{ dns }}'
+
 WG_IPADDR='{{ config.wg_ip }}/32'
 SERVER_WG_IPADDR='{{ wg_ip }}/32'
